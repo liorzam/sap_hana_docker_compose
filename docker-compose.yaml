@@ -1,0 +1,63 @@
+version: "3.7"
+
+# :•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•
+services:
+  sqlpad:
+    hostname: sqlpad
+    image: sqlpad/sqlpad:5
+    volumes:
+      - db-data:/opt/data
+    ports:
+      - "3000:3000"
+    environment:
+      SQLPAD_ADMIN: 'admin'
+      SQLPAD_ADMIN_PASSWORD: 'admin'
+      SQLPAD_APP_LOG_LEVEL: debug
+      SQLPAD_WEB_LOG_LEVEL: warn
+    depends_on:
+      - hxehost
+    networks:
+      - local_proxy
+
+# :•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•
+  hxehost:
+    image: store/saplabs/hanaexpress:2.00.045.00.20200121.1
+    hostname: hxehost
+    container_name: hxehost
+    ulimits:
+      nofile: 1048576
+    ports:
+      - "39013:39013"
+      - "39015:39015"
+      - "39017:39017"
+      - "39041-39045:39041-39045"
+      - "1128-1129:1128-1129"
+      - "59013-59014:59013-59014"
+    volumes:
+      - hana-data:/hana/mounts
+    sysctls:
+      - kernel.shmmax=1073741824
+      - net.ipv4.ip_local_port_range=60000 65535
+      - kernel.shmmni=524288
+      - kernel.shmall=8388608
+    restart: always
+    command: --agree-to-sap-license --passwords-url https://api.jsonbin.io/b/5f146973918061662844a13f
+    # https://api.jsonbin.io/b/5efc84100bab551d2b6a050c user:system, password HXEHana1 expose json:
+    #    {
+    #      master_password: "BlaBlaBla"
+    #    }
+
+    # user credentials:
+    #      "username": "system",
+    #       "password": "BlaBlaBla"
+    networks:
+      - local_proxy
+
+# :•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•:•
+networks:
+  local_proxy:
+    driver: bridge
+
+volumes:
+  db-data:
+  hana-data:
